@@ -26,9 +26,8 @@ enum TagColor {
         var green: CGFloat = 0
         var blue: CGFloat = 0
         var alpha: CGFloat = 0
-        guard converted.getRed(&red, green: &green, blue: &blue, alpha: &alpha) else {
-            return "#7A6A58"
-        }
+        // macOS 27 SDK 里这个方法不再返回 Bool。
+        converted.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
         return String(
             format: "#%02X%02X%02X",
             Int((red * 255).rounded()),

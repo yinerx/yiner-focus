@@ -18,6 +18,8 @@ settings:
     ENABLE_HARDENED_RUNTIME: YES
     ENABLE_APP_SANDBOX: NO
     SWIFT_STRICT_CONCURRENCY: minimal
+    # 只做 Apple Silicon，和银耳的 MacBook Air 一致。
+    ARCHS: arm64
 packages:
   YinerFocusCore:
     path: ../Packages/YinerFocusCore
