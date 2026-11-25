@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>已暂停访问</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --ink: #14110e;
+    --paper: #f4eadc;
+    --muted: #cbbba6;
+    --sand: #e2b07a;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    min-height: 100%;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", sans-serif;
+  }
+  main {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 48px 24px 32px;
+    gap: 22px;
+  }
+  h1 {
+    margin: 0;
+    font-size: 44px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+  p {
+    margin: 0;
+    max-width: 36em;
+    font-size: 18px;
+    line-height: 1.7;
+    color: var(--muted);
+  }
+  footer {
+    margin-top: 12px;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    color: #8d7d6c;
+  }
+</style>
+</head>
+<body>
+<main>
+  <svg width="88" height="88" viewBox="0 0 88 88" aria-hidden="true">
+    <rect x="8" y="8" width="72" height="72" rx="22" fill="none" stroke="#e2b07a" stroke-width="4"/>
+    <rect x="30" y="28" width="8" height="32" rx="3" fill="#e2b07a"/>
+    <rect x="50" y="28" width="8" height="32" rx="3" fill="#e2b07a"/>
+  </svg>
+  <h1>已暂停访问</h1>
+  <p id="msg">按你自己设定的网站名单，这个页面先停在这里。请回到正在进行的任务。</p>
+  <footer>银耳专注 · 本地页面 · 不联网</footer>
+</main>
+<script>
+(function () {
+  var mode = "block";
+  try {
+    var value = new URLSearchParams(window.location.search).get("mode");
+    if (value === "allow" || value === "block") mode = value;
+  } catch (error) {}
+  var text = mode === "allow"
+    ? "这个网站不在你的允许名单中。这是你自己设下的规则，银耳专注只在这台电脑上把它换成了这一页。请回到正在进行的任务。"
+    : "这个网站在你的拦截名单中。这是你自己设下的规则，银耳专注只在这台电脑上把它换成了这一页。请回到正在进行的任务。";
+  var node = document.getElementById("msg");
+  if (node) node.textContent = text;
+})();
+</script>
+</body>
+</html>

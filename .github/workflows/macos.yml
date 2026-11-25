@@ -1,0 +1,87 @@
+name: macOS
+
+on:
+  push:
+    branches:
+      - main
+      - cursor/yiner-focus-v1-3790
+  workflow_dispatch:
+
+concurrency:
+  group: macos-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: xcode-27
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select newest Xcode
+        run: |
+          set -euo pipefail
+          latest=$(python3 - <<'PY'
+          import os
+          apps = [name for name in os.listdir("/Applications") if name.startswith("Xcode_") and name.endswith(".app")]
+          def key(name):
+              version = name[len("Xcode_"):-len(".app")]
+              return tuple(int(part) if part.isdigit() else 0 for part in version.split("."))
+          if not apps:
+              raise SystemExit("no Xcode_*.app under /Applications")
+          print(sorted(apps, key=key)[-1])
+          PY
+          )
+          sudo xcode-select -s "/Applications/${latest}/Contents/Developer"
+          xcodebuild -version
+          echo "SDK $(xcrun --show-sdk-version) at $(xcrun --show-sdk-path)"
+          echo "MACOSX_DEPLOYMENT_TARGET from project is 26.0"
+
+      - name: Test YinerFocusCore
+        run: swift test
+        working-directory: Packages/YinerFocusCore
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: "1"
+          HOMEBREW_NO_INSTALL_CLEANUP: "1"
+
+      - name: Generate and build Release
+        run: |
+          set -euo pipefail
+          xcodegen generate
+          xcodebuild \
+            -project YinerFocus.xcodeproj \
+            -scheme YinerFocus \
+            -configuration Release \
+            -destination "platform=macOS,arch=arm64" \
+            -derivedDataPath "${RUNNER_TEMP}/DerivedData" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGN_STYLE=Manual \
+            DEVELOPMENT_TEAM="" \
+            CODE_SIGN_ENTITLEMENTS="" \
+            ENABLE_HARDENED_RUNTIME=NO \
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            ARCHS=arm64 \
+            ONLY_ACTIVE_ARCH=YES \
+            build
+          APP="${RUNNER_TEMP}/DerivedData/Build/Products/Release/YinerFocus.app"
+          test -d "${APP}"
+          test -d "${APP}/Contents/PlugIns/YinerWidget.appex"
+          ditto -c -k --keepParent "${APP}" "${GITHUB_WORKSPACE}/YinerFocus-macos.zip"
+        working-directory: App
+
+      - name: Upload app
+        uses: actions/upload-artifact@v4
+        with:
+          name: YinerFocus-macos
+          path: YinerFocus-macos.zip
+          retention-days: 7
+          if-no-files-found: error
