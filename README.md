@@ -94,7 +94,29 @@ swift test
 
 验收项 A01 到 A20 都在 `Tests/YinerFocusCoreTests/AcceptanceTests.swift`。同目录的 `SupportTests.swift` 覆盖统计、标签、存档和菜单栏文案这些配套逻辑。
 
-没有添加 GitHub Actions 的 macOS 构建，避免产生费用。要开的话需要另一次确认。
+推送到 `main` 或本功能分支时，GitHub Actions 会在最新的 macOS 托管 runner 上再跑一遍这些测试，并用 Xcode 编出未签名的 Release 应用。最低系统仍是 macOS 26.0，所以 macOS 27 可以运行。
+
+## 从 Actions 下载未签名的应用
+
+1. 打开仓库的 Actions，进入名为 macOS 的工作流，选一次绿色运行。
+2. 在页面底部的 Artifacts 里下载 `YinerFocus-macos`。产物只保留 7 天。
+3. 解压得到 `YinerFocus.app`。不要从「访达」里直接双击第一次打开，系统会因为没有开发者签名而拦截。
+
+去掉下载带来的隔离标记后再打开：
+
+```bash
+xattr -dr com.apple.quarantine ~/Downloads/YinerFocus.app
+open ~/Downloads/YinerFocus.app
+```
+
+如果仍然被拦，到「系统设置 › 隐私与安全性」最下面点「仍要打开」。也可以在访达里对应用按住 Control 再点「打开」。
+
+这包是 CI 上关掉签名编出来的（`CODE_SIGNING_ALLOWED=NO`），和用开发者证书编的不是同一个身份：
+
+- **今日统计小组件**：小组件和 App Group 需要稳定的签名和描述文件。未签名的包里即使带了扩展，桌面或通知中心也通常加不上，或加上后数字不更新。应用里面的统计不受影响。要用小组件，请在 Mac 上用你的开发团队签名后再编译。
+- **自动化（网站拦截）**：系统按代码签名记住「允许银耳专注控制浏览器」。未签名或每次重新下载后签名变了，权限不会留下来，需要重新允许；有时系统设置里根本不出现这一项，网站拦截就会失效。
+- **日历**：完整日历权限同样绑在签名上。未签名时可能每次启动都再问一次，或者允许了也不保存。通知、登录项也一样，登录项还要求应用放在「应用程序」文件夹并且签名稳定。
+- 菜单栏计时、本机统计、导入导出不依赖这些签名，未签名也可以用。
 
 ## 想改默认值
 
